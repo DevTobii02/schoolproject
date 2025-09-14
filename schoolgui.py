@@ -132,7 +132,12 @@ class SchoolManager:
 
         tk.Button(academic_registration_window, text="Submit", command=self.submit_academic_registration, font=("Times New Roman", 18, "bold")).grid(row=6, column=1, padx=7, pady=7, ipady=5, ipadx=5, sticky="w")
 
-
+    def update_subjects(self, event=None):
+        department = self.department_entry.get().strip()
+        subjects = schooldb.get_subjects_by_department(department)
+        self.subjects_listbox.delete(0, tk.END)
+        for subject in subjects:
+            self.subjects_listbox.insert(tk.END, subject)
 
     def submit_academic_registration(self):
         subject = self.subjects_entry.get().strip()
