@@ -123,12 +123,13 @@ class SchoolManager:
         self.class_entry.grid(row=2, column=1, columnspan=2, sticky="w")
 
         tk.Label(academic_registration_window, text="Subjects :", font=("Times New Roman", 18, "bold")).grid(row=3, column=0, columnspan=2, padx=7, pady=7, ipady=5, ipadx=5,sticky="w")
-        self.subjects_entry = tk.Entry(academic_registration_window, width=30)
-        self.subjects_entry.grid(row=3, column=1, columnspan=2, sticky="w")
+        self.subjects_listbox = tk.Listbox(academic_registration_window, selectmode=tk.MULTIPLE, height=4, width=30)
+        self.subjects_listbox.grid(row=3, column=1, columnspan=2, sticky="w")
 
         tk.Label(academic_registration_window, text="Department :", font=("Times New Roman", 18, "bold")).grid(row=4, column=0, columnspan=2, padx=7, pady=7, ipady=5, ipadx=5,sticky="w")
         self.department_entry = tk.Entry(academic_registration_window, width=30)
         self.department_entry.grid(row=4, column=1, columnspan=2, sticky="w")
+        self.department_entry.bind('<KeyRelease>', self.update_subjects)
 
         tk.Button(academic_registration_window, text="Submit", command=self.submit_academic_registration, font=("Times New Roman", 18, "bold")).grid(row=6, column=1, padx=7, pady=7, ipady=5, ipadx=5, sticky="w")
 
@@ -140,15 +141,16 @@ class SchoolManager:
             self.subjects_listbox.insert(tk.END, subject)
 
     def submit_academic_registration(self):
-        subject = self.subjects_entry.get().strip()
+        selected_indices = self.subjects_listbox.curselection()
         department = self.department_entry.get().strip()
 
         if not department:
             messagebox.showerror("Error", "Please select a department")
             return
-        if not subject:
+        if not selected_indices:
             messagebox.showerror("Error", "Please select subjects")
             return
+        subjects = [self.subjects_listbox.get(i) for i in selected_indices]
         messagebox.showinfo("Success", "Academic registration successful. Opening student dashboard.")
         self.open_student_dashboard()
 
