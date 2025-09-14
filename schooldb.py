@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS Students(
     gender TEXT NOT NULL CHECK (gender IN ('Male', 'Female')),
     date_of_birth DATE,
     email TEXT UNIQUE,
-    address TEXT
+    address TEXT,
+    admission_number TEXT UNIQUE
     );
     """)
 
@@ -45,11 +46,11 @@ CREATE TABLE IF NOT EXISTS StudentDashboard(
           """)
 
 #Student Related Functions
-def insert_student(first_name, last_name, gender, date_of_birth, email, address):
+def insert_student(first_name, last_name, gender, date_of_birth, email, address, admission_number):
     conn = sqlite3.connect('My_School.db')
     c = conn.cursor()
-    c.execute("""INSERT INTO STUDENTS (first_name, last_name, gender, date_of_birth, email, address)
-              VALUES (?, ?, ?, ?, ?, ?)""", (first_name, last_name, gender, date_of_birth, email, address)) #Question Marks As Placeholders For Parameters
+    c.execute("""INSERT INTO STUDENTS (first_name, last_name, gender, date_of_birth, email, address, admission_number)
+              VALUES (?, ?, ?, ?, ?, ?, ?)""", (first_name, last_name, gender, date_of_birth, email, address, admission_number)) #Question Marks As Placeholders For Parameters
     conn.commit()
     conn.close()
 
@@ -62,16 +63,15 @@ def get_student():
     return rows
 
 #Academic Registration Function
-def insert_academic_registration(StudentID, department, session, level):
+def insert_academic_registration(first_name, last_name, department_name, class_num, subjects):
     conn = sqlite3.connect('My_School.db')
     c = conn.cursor()
-    c.execute("""INSERT INTO AcademicRegistration (StudentID, department, session, level)   
-        VALUES(?, ?, ?, ?)""", (StudentID, department, session, level)) #Question Marks As Placeholders For Parameters
+    # Assuming department_id is not used, set to NULL or 0
+    c.execute("""INSERT INTO AcademicRegistration (first_name, last_name, department_id, department_name)
+        VALUES(?, ?, ?, ?)""", (first_name, last_name, None, department_name))
     conn.commit()
     conn.close()
 
-    def check():
-        pass
 
 # Dictionary mapping departments to subjects
 DEPARTMENT_SUBJECTS = {
