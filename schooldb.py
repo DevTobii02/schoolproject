@@ -72,3 +72,15 @@ def insert_academic_registration(StudentID, department, session, level):
 
     def check():
         pass
+
+# Dictionary mapping departments to subjects
+DEPARTMENT_SUBJECTS = {
+    "Science": ["Mathematics", "Physics", "Chemistry", "Biology"],
+    "Arts": ["English", "History", "Geography", "Literature"],
+    "Commerce": ["Accounting", "Economics", "Business Studies", "Statistics"],
+    "Engineering": ["Mathematics", "Physics", "Computer Science", "Engineering Drawing"]
+}
+
+def get_subjects_by_department(department):
+    """Return list of subjects for the given department."""
+    return DEPARTMENT_SUBJECTS.get(department, [])
