@@ -3,6 +3,8 @@ import tkinter as tk
 from tkinter import messagebox
 from PIL import ImageTk, Image
 import schooldb
+import re
+from datetime import datetime
 class SchoolManager:
     def __init__(self, root):
         self.root = root
@@ -72,28 +74,59 @@ class SchoolManager:
         self.email_entry = tk.Entry(new_student_window, width=30)
         self.email_entry.grid(row=8, column=1, columnspan=2, sticky="w")
 
-        tk.Label(new_student_window, text="Password :", font=("Times New Roman", 18, "bold")).grid(row=9, column=0, columnspan=2, padx=7, pady=7,ipady=5, ipadx=5,sticky="w")
-        self.password_entry = tk.Entry(new_student_window, width=30)
-        self.password_entry.grid(row=9, column=1, columnspan=2, sticky="w")
+        tk.Label(new_student_window, text="Admission Number :", font=("Times New Roman", 18, "bold")).grid(row=9, column=0, columnspan=2, padx=7, pady=7,ipady=5, ipadx=5,sticky="w")
+        self.admission_entry = tk.Entry(new_student_window, width=30)
+        self.admission_entry.grid(row=9, column=1, columnspan=2, sticky="w")
 
-        tk.Button(new_student_window, text="Submit", command=self.submit_student_details, font=("Times New Roman", 18, "bold")).grid(row=10, column=1, padx=7, pady=7,ipady=5, ipadx=5,sticky="w")
+        tk.Label(new_student_window, text="Password :", font=("Times New Roman", 18, "bold")).grid(row=10, column=0, columnspan=2, padx=7, pady=7,ipady=5, ipadx=5,sticky="w")
+        self.password_entry = tk.Entry(new_student_window, width=30)
+        self.password_entry.grid(row=10, column=1, columnspan=2, sticky="w")
+
+        tk.Button(new_student_window, text="Submit", command=self.submit_student_details, font=("Times New Roman", 18, "bold")).grid(row=11, column=1, padx=7, pady=7,ipady=5, ipadx=5,sticky="w")
 
 
     def submit_student_details(self):
         email = self.email_entry.get().strip()
         password = self.password_entry.get().strip()
         gender = self.gender_entry.get().strip()
+        dob = self.DOB_entry.get().strip()
+        admission_number = self.admission_entry.get().strip()
 
         if not email or not password:
             messagebox.showerror("Error", "Please enter both email and password")
             return
-        messagebox.showinfo("Success", "Student details confirmed. Proceeding to academic registration.")
-        self.academic_registration()
 
         if gender not in ["Male", "Female"]:
-            tk.messagebox.showerror("Error", "Gender must be Male/Female.")
+            messagebox.showerror("Error", "Gender must be Male/Female.")
             return
 
+        if not self.validate_age(dob):
+            messagebox.showerror("Error", "Invalid Date of Birth or age not between 5 and 25.")
+            return
+
+        if not self.validate_admission_number(admission_number):
+            messagebox.showerror("Error", "Admission number must be 6 to 10 digits.")
+            return
+
+        # Get other fields
+        first_name = self.first_name_entry.get().strip()
+        last_name = self.last_name_entry.get().strip()
+        middle_name = self.middle_name_entry.get().strip()
+        nationality = self.Nationality_entry.get().strip()
+        soo = self.SOO_entry.get().strip()
+        address = f"{nationality}, {soo}"  # Combine into address
+
+        # Store for later use
+        self.student_first_name = first_name
+        self.student_last_name = last_name
+
+        # Insert into database
+        try:
+            schooldb.insert_student(first_name, last_name, gender, dob, email, address, admission_number)
+            messagebox.showinfo("Success", "Student details saved. Proceeding to academic registration.")
+            self.academic_registration()
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save student details: {str(e)}")
 
         #tk.Label(submit_student_details_window, text="Collecting Student Details", bg="yellow", fg="black",font=("Times New Roman", 18, "bold")).grid(row=0, column=0, padx=7, pady=7,ipady=5, ipadx=5,sticky="ew")
         # Gets Value From Submit New Student Registration Window
@@ -143,6 +176,8 @@ class SchoolManager:
     def submit_academic_registration(self):
         selected_indices = self.subjects_listbox.curselection()
         department = self.department_entry.get().strip()
+        class_str = self.class_entry.get().strip()
+        first_name = self.first_name_entry.get().strip()
 
         if not department:
             messagebox.showerror("Error", "Please select a department")
@@ -150,9 +185,21 @@ class SchoolManager:
         if not selected_indices:
             messagebox.showerror("Error", "Please select subjects")
             return
+        if not self.validate_class(class_str):
+            messagebox.showerror("Error", "Class must be a number between 1 and 12.")
+            return
         subjects = [self.subjects_listbox.get(i) for i in selected_indices]
-        messagebox.showinfo("Success", "Academic registration successful. Opening student dashboard.")
-        self.open_student_dashboard()
+
+        # Get last_name from stored value
+        last_name = getattr(self, 'student_last_name', '')
+
+        # Insert into database
+        try:
+            schooldb.insert_academic_registration(first_name, last_name, department, int(class_str), subjects)
+            messagebox.showinfo("Success", "Academic registration saved. Opening student dashboard.")
+            self.open_student_dashboard()
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save academic registration: {str(e)}")
 
 
     def returning_student(self):
@@ -223,6 +270,24 @@ class SchoolManager:
                 activity = activities[row][col]
                 # Create a button with the activity name, set font, and command to print the activity when clicked
                 tk.Button(student_dashboard_window, text=activity, font=("Times New Roman", 14, "bold"), command=lambda a=activity: print(f"Clicked: {a}")).grid(row=row+1, column=col, padx=5, pady=5, sticky="nsew")
+
+    def validate_age(self, dob):
+        try:
+            birth_date = datetime.strptime(dob, '%Y-%m-%d')
+            today = datetime.today()
+            age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+            return 5 <= age <= 25
+        except ValueError:
+            return False
+
+    def validate_class(self, class_str):
+        if re.match(r'^\d+$', class_str):
+            class_num = int(class_str)
+            return 1 <= class_num <= 12
+        return False
+
+    def validate_admission_number(self, admission):
+        return re.match(r'^\d{6,10}$', admission) is not None
 
 if __name__ == "__main__":
     root = tk.Tk()
